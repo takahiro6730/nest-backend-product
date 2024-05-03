@@ -42,7 +42,7 @@ export class AuthService {
         },
         {
           secret: jwtConstants.secret,
-          expiresIn: '24h',
+          expiresIn: '30d',
         },
       ),
       this.jwtService.signAsync(

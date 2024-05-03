@@ -34,19 +34,12 @@ export class AuthController {
         expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
       });
   
-      res.cookie("refresh_token", token.refresh_token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
-      });
-  
       return sendResponse(
         res,
         HttpStatus.OK,
         'SUCCESS',
         true,
-        token
+        token.access_token
       );
   }
 }
