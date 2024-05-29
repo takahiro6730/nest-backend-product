@@ -1,15 +1,41 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { ConfigModule } from "@nestjs/config";
+import { MongooseModule } from "@nestjs/mongoose";
+
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from "@nestjs/common";
+import { UserModule } from "./users/users.module";
+import { AuthModule } from "./auth/auth.module";
+import { LoggerService } from "./common/service/logger.service";
+import { LoggerMiddleware } from "./common/service/loggermiddleware.service";
 import { DatabaseModule } from "./config/database.module";
+import { helloModule } from "./hello/hello.module";
+import { roleModule } from "./roles/roles.module";
 
 @Module({
-  imports: [MongooseModule.forRoot('mongodb://localhost:27017/procorse'), DatabaseModule, UsersModule],
-  controllers: [AppController],
-  providers: [AppService],
-  
+  imports: [
+    ConfigModule.forRoot({
+      envFilePath: `${process.cwd()}/.env`,
+      isGlobal: true,
+    }),
+    MongooseModule.forRoot(
+      `${process.env.MONGODB_URI}`
+    ),
+    DatabaseModule,
+    UserModule,
+    AuthModule,
+    helloModule,
+    roleModule,
+  ],
+  providers: [LoggerService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes({ path: "*", method: RequestMethod.ALL });
+  }
+}

@@ -1,23 +1,31 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { UsersModule } from '../users/users.module';
+import { LoggerService } from '../common/service/logger.service';
+import { UserModule } from '../users/users.module';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { jwtConstants } from './constants';
 import { AuthController } from './auth.controller';
+import { AuthGuard } from '../common/guards/at.guard';
+import { AuthService } from './auth.service';
 
-const jwtConstants = {
-  secret: 'DO NOT USE THIS VALUE. INSTEAD, CREATE A COMPLEX SECRET AND KEEP IT SAFE OUTSIDE OF THE SOURCE CODE.',
-};
 
 @Module({
   imports: [
-    UsersModule,
+    UserModule,
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '60s' },
+      signOptions: { expiresIn: '60s' }
     }),
   ],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    LoggerService
+  ],
   controllers: [AuthController],
   exports: [AuthService],
 })
