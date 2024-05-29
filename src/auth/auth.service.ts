@@ -1,18 +1,40 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { UsersService } from '../users/users.service';
+import { LoggerService } from '../common/service/logger.service';
+import { UserService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-
-const jwtConstants = {
-    secret: 'DO NOT USE THIS VALUE. INSTEAD, CREATE A COMPLEX SECRET AND KEEP IT SAFE OUTSIDE OF THE SOURCE CODE.',
-  };
+import * as bcrypt from 'bcrypt';
+import { jwtConstants } from '../auth/constants';
+import { v4 as uuid } from 'uuid';
+import { sendResponse } from 'src/utils';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
+    private usersService: UserService,
     private jwtService: JwtService,
-  ) {}
+    private readonly logger: LoggerService
+  ) { }
+
+  async signIn(email: string, pass: string) {
+
+    const id: string = uuid();
+    this.logger.log('auth service api called', id, 'auth.service.ts', '', '', 'signIn-service');
+    const user = await this.usersService.findOneUser(email);
+    if (!user) {
+      throw new UnauthorizedException('Username and password wrong.');
+    }
+
+    const match = await bcrypt.compare(pass, user?.password);
+    if (match) {
+      const payload = { email: user.email, userId: user._id.toString(), username: user.username };
+      const tokens = await this.getTokens(payload);
+      return {
+        ...tokens
+      };
+    }
+
+  }
+
 
   async refreshTokens(userId: string, rt: string) {
     const user = await this.usersService.findOne(userId);
@@ -27,7 +49,7 @@ export class AuthService {
 
     const rtHash = await this.hashPassword(tokens.refresh_token);
 
-    // await this.usersService.updateOne(user._id, { hashdRt: rtHash });
+    await this.usersService.updateOne(user._id, { hashdRt: rtHash });
     return tokens;
   }
 
@@ -42,7 +64,7 @@ export class AuthService {
         },
         {
           secret: jwtConstants.secret,
-          expiresIn: '30d',
+          expiresIn: '24h',
         },
       ),
       this.jwtService.signAsync(
@@ -64,24 +86,8 @@ export class AuthService {
     };
   }
 
+  //Encriptación de la copntraseña
   async hashPassword(data: string) {
     return bcrypt.hash(data, 10);
-  }
-
-  async logIn(
-    email: string,
-    pass: string,
-  ): Promise<{ access_token: string, refresh_token: string}> {
-    const user = await this.usersService.findOne(email);
-    if (user?.password !== pass) {
-      throw new UnauthorizedException();
-    }
-    const payload = { sub: user.userId, email: user.email };
-
-    const tokens = await this.getTokens(payload);
-
-    return {
-        ...tokens
-    };
   }
 }

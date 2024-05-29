@@ -8,10 +8,10 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forRootAsync({
       useFactory: async () => {
         try {
-          let url = 'mongodb://localhost:27017/procorse'
+          let url = `${process.env.MONGODB_URI}`
          console.log('===========',url)
           return {
-            uri: 'mongodb://localhost:27017/procorse'
+            uri: `${process.env.MONGODB_URI}`
           };
         } catch (error) {
           console.log(error)
