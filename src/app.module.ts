@@ -14,6 +14,7 @@ import { LoggerMiddleware } from "./common/service/loggermiddleware.service";
 import { DatabaseModule } from "./config/database.module";
 import { helloModule } from "./hello/hello.module";
 import { roleModule } from "./roles/roles.module";
+import { BlogModule } from './blog/blog.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { roleModule } from "./roles/roles.module";
     AuthModule,
     helloModule,
     roleModule,
+    BlogModule,
   ],
   providers: [LoggerService],
 })
